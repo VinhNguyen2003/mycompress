@@ -15,14 +15,25 @@ int main(int argc, char **argv) {
     const char *format = argv[1];
     const char *command = argv[2];
     const char *archive_name = argv[3];
+    const char *output_dir = NULL;
 
     file_list_t files;
     file_list_init(&files);
 
-    for (int i = 4; i < argc; i++) {
-        file_list_add(&files, argv[i]);
+    int file_start_index = 4;
+    if (argc > 4 && strcmp(argv[4], "-o") == 0) {
+        if (argc < 6) {
+            fprintf(stderr, "Output directory specified but no directory given.\n");
+            return 1;
+        }
+        output_dir = argv[5];
+        file_start_index = 6;
     }
 
+    for (int i = file_start_index; i < argc; i++) {
+        file_list_add(&files, argv[i]);
+    }
+    
     int result = 0;
 
     // Check for format and perform corresponding actions
@@ -30,7 +41,7 @@ int main(int argc, char **argv) {
         if (strcmp(command, "-c") == 0) {
             result = tar_compress(archive_name, &files);
         } else if (strcmp(command, "-x") == 0) {
-            result = tar_extract(archive_name, &files);
+            result = tar_extract(archive_name, &files, output_dir);
         } else {
             fprintf(stderr, "Invalid command for tar format.\n");
             result = 1;

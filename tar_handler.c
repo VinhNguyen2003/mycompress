@@ -8,6 +8,7 @@
 #include <grp.h>
 
 #define BLOCK_SIZE 512
+#define MAX_PATH_LENGTH 4096
 #define REGTYPE '0'
 
 typedef struct {
@@ -51,7 +52,7 @@ typedef struct {
 static void compute_checksum(tar_header *header);
 static int fill_tar_header(tar_header *header, const char *file_name);
 static int write_file_to_archive(FILE *arch, const char *file_name);
-static int extract_file(FILE *arch, const tar_header *header);
+static int extract_file(FILE *arch, const tar_header *header, const char *full_path);
 static int add_footer_blocks(FILE *arch);
 
 // Improved tar compress function
@@ -86,7 +87,7 @@ int tar_compress(const char *archive_name, const file_list_t *files) {
     return 0;
 }
 
-int tar_extract(const char *archive_name, const file_list_t *files) {
+int tar_extract(const char *archive_name, const file_list_t *files, const char *output_dir) {
     FILE *arch = fopen(archive_name, "rb");
     if (!arch) {
         perror("Failed to open archive");
@@ -105,7 +106,14 @@ int tar_extract(const char *archive_name, const file_list_t *files) {
             continue;
         }
 
-        if (extract_file(arch, &header) != 0) {
+        char full_path[MAX_PATH_LENGTH];
+        if (output_dir != NULL) {
+            snprintf(full_path, sizeof(full_path), "%s/%s", output_dir, header.name);
+        } else {
+            strncpy(full_path, header.name, sizeof(full_path));
+        }
+        printf("full path: %s \n", full_path);
+        if (extract_file(arch, &header, full_path) != 0) {
             fclose(arch);
             return -1;
         }
@@ -222,8 +230,8 @@ static int write_file_to_archive(FILE *arch, const char *file_name) {
     return 0;
 }
 
-static int extract_file(FILE *arch, const tar_header *header) {
-    FILE *out = fopen(header->name, "wb");
+static int extract_file(FILE *arch, const tar_header *header, const char *full_path) {
+    FILE *out = fopen(full_path, "wb");
     if (!out) {
         perror("Failed to open output file");
         return -1;
