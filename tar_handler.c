@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
+#include <zlib.h>
 
 typedef struct {
     // File's name, as a null-terminated string
@@ -108,7 +109,6 @@ int tar_extract(const char *archive_name, const file_list_t *files, const char *
         } else {
             strncpy(full_path, header.name, sizeof(full_path));
         }
-        printf("full path: %s \n", full_path);
         if (extract_file(arch, &header, full_path) != 0) {
             fclose(arch);
             return -1;
@@ -120,6 +120,94 @@ int tar_extract(const char *archive_name, const file_list_t *files, const char *
     }
 
     fclose(arch);
+    return 0;
+}
+
+int tar_gz_compress(const char *archive_path, const file_list_t *files) {
+    // Create a TAR file
+    char tar_path[MAX_PATH_LENGTH];
+    snprintf(tar_path, sizeof(tar_path), "%s.tar", archive_path);
+    int tar_result = tar_compress(tar_path, files);
+    if (tar_result != 0) return tar_result;
+
+    // Compress the TAR file using gzip
+    FILE *tar_file = fopen(tar_path, "rb");
+    if (!tar_file) {
+        perror("Failed to open TAR file for reading");
+        return -1;
+    }
+
+    // Open the output file for writing in gzip format
+    char gz_path[MAX_PATH_LENGTH];
+    snprintf(gz_path, sizeof(gz_path), "%s.gz", archive_path);
+    gzFile gz_file = gzopen(gz_path, "wb");
+    if (!gz_file) {
+        perror("Failed to open gzip file for writing");
+        fclose(tar_file);
+        return -1;
+    }
+
+    // Buffer for reading and writing
+    char buffer[BLOCK_SIZE];
+    int bytes_read;
+    while ((bytes_read = fread(buffer, 1, BLOCK_SIZE, tar_file)) > 0) {
+        if (gzwrite(gz_file, buffer, bytes_read) != bytes_read) {
+            perror("Failed to write to gzip file");
+            gzclose(gz_file);
+            fclose(tar_file);
+            return -1;
+        }
+    }
+
+    // Close files
+    gzclose(gz_file);
+    fclose(tar_file);
+
+    // Remove the intermediate TAR file
+    remove(tar_path);
+
+    return 0;
+}
+
+int tar_gz_extract(const char *archive_path, const file_list_t *files, const char *output_dir) {
+    // Decompress gzip file to a TAR file
+    char tar_path[MAX_PATH_LENGTH];
+    snprintf(tar_path, sizeof(tar_path), "%s.tar", archive_path);
+
+    gzFile gz_file = gzopen(archive_path, "rb");
+    if (!gz_file) {
+        perror("Failed to open gzip file for reading");
+        return -1;
+    }
+
+    FILE *tar_file = fopen(tar_path, "wb");
+    if (!tar_file) {
+        perror("Failed to open TAR file for writing");
+        gzclose(gz_file);
+        return -1;
+    }
+
+    char buffer[BLOCK_SIZE];
+    int bytes_read;
+    while ((bytes_read = gzread(gz_file, buffer, BLOCK_SIZE)) > 0) {
+        if (fwrite(buffer, 1, bytes_read, tar_file) != bytes_read) {
+            perror("Failed to write to TAR file");
+            gzclose(gz_file);
+            fclose(tar_file);
+            return -1;
+        }
+    }
+
+    gzclose(gz_file);
+    fclose(tar_file);
+
+    // Extract files from the TAR file
+    int tar_result = tar_extract(tar_path, files, output_dir);
+    if (tar_result != 0) return tar_result;
+
+    // Remove the intermediate TAR file
+    remove(tar_path);
+
     return 0;
 }
 

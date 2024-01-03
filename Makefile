@@ -8,7 +8,7 @@ EXECUTABLE=mycompress
 all: $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@ -lz
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@

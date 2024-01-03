@@ -33,24 +33,34 @@ int main(int argc, char **argv) {
     for (int i = file_start_index; i < argc; i++) {
         file_list_add(&files, argv[i]);
     }
-    
+
+    char full_archive_path[MAX_PATH_LENGTH];
+    if (output_dir) {
+        snprintf(full_archive_path, sizeof(full_archive_path), "%s/%s", output_dir, archive_name);
+    } else {
+        strncpy(full_archive_path, archive_name, sizeof(full_archive_path));
+        full_archive_path[sizeof(full_archive_path) - 1] = '\0';
+    }
+
     int result = 0;
 
     // Check for format and perform corresponding actions
     if (strcmp(format, "tar") == 0) {
-        if (strcmp(command, "-c") == 0) {
-            char full_archive_path[MAX_PATH_LENGTH];
-            if (output_dir) {
-                snprintf(full_archive_path, sizeof(full_archive_path), "%s/%s", output_dir, archive_name);
-            } else {
-                strncpy(full_archive_path, archive_name, sizeof(full_archive_path));
-                full_archive_path[sizeof(full_archive_path) - 1] = '\0'; // Ensure null termination
-            } 
+        if (strcmp(command, "-c") == 0) { 
             result = tar_compress(full_archive_path, &files);
         } else if (strcmp(command, "-x") == 0) {
             result = tar_extract(archive_name, &files, output_dir);
         } else {
             fprintf(stderr, "Invalid command for tar format.\n");
+            result = 1;
+        }
+    } else if (strcmp(format, "targz") == 0) {
+        if (strcmp(command, "-c") == 0) {
+            result = tar_gz_compress(full_archive_path, &files); // Function to be implemented
+        } else if (strcmp(command, "-x") == 0) {
+            result = tar_gz_extract(archive_name, &files, output_dir); // Function to be implemented
+        } else {
+            fprintf(stderr, "Invalid command for targz format.\n");
             result = 1;
         }
     } else {
