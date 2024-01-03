@@ -109,6 +109,10 @@ int tar_extract(const char *archive_name, const file_list_t *files) {
             fclose(arch);
             return -1;
         }
+
+        // Move to the start of the next header
+        size_t padding = (BLOCK_SIZE - (size % BLOCK_SIZE)) % BLOCK_SIZE;
+        fseek(arch, padding, SEEK_CUR);
     }
 
     fclose(arch);
@@ -247,7 +251,6 @@ static int extract_file(FILE *arch, const tar_header *header) {
     fclose(out);
     return 0;
 }
-
 
 static int add_footer_blocks(FILE *arch) {
     char buffer[BLOCK_SIZE] = {0};

@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "file_list.h"
 #include "tar_handler.h"
+
 int main(int argc, char **argv) {
     if (argc < 4) {
-        fprintf(stderr, "Usage: %s <format> <command> <archive_name> [file...]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <format> <command> <archive_name> [-o output_dir] [file...]\n", argv[0]);
         fprintf(stderr, "Formats: tar, zip\n");
         fprintf(stderr, "Commands: -c (create), -x (extract)\n");
         return 1;

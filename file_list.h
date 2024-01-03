@@ -1,7 +1,7 @@
 #ifndef _FILE_LIST_H
 #define _FILE_LIST_H
 
-#define MAX_NAME_LEN 32
+#define MAX_NAME_LEN 4096
 
 //  Definition of each node in the linked list
 typedef struct node {
