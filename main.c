@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "file_list.h"
 #include "tar_handler.h"
+#include "zip_handler.h"
 
 int main(int argc, char **argv) {
     if (argc < 4) {
@@ -44,7 +45,6 @@ int main(int argc, char **argv) {
 
     int result = 0;
 
-    // Check for format and perform corresponding actions
     if (strcmp(format, "tar") == 0) {
         if (strcmp(command, "-c") == 0) { 
             result = tar_compress(full_archive_path, &files);
@@ -56,11 +56,20 @@ int main(int argc, char **argv) {
         }
     } else if (strcmp(format, "targz") == 0) {
         if (strcmp(command, "-c") == 0) {
-            result = tar_gz_compress(full_archive_path, &files); // Function to be implemented
+            result = tar_gz_compress(full_archive_path, &files);
         } else if (strcmp(command, "-x") == 0) {
-            result = tar_gz_extract(archive_name, &files, output_dir); // Function to be implemented
+            result = tar_gz_extract(archive_name, &files, output_dir);
         } else {
             fprintf(stderr, "Invalid command for targz format.\n");
+            result = 1;
+        }
+    } else if (strcmp(format, "zip") == 0) {
+        if (strcmp(command, "-c") == 0) {
+            result = zip_compress(archive_name, &files);
+        } else if (strcmp(command, "-x") == 0) {
+            result = zip_extract(archive_name, &files, output_dir);
+        } else {
+            fprintf(stderr, "Invalid command for zip format.\n");
             result = 1;
         }
     } else {

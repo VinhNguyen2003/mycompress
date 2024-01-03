@@ -1,17 +1,20 @@
 CC=gcc
-CFLAGS=-Wall -g
+CFLAGS=-Wall -g -Iincludes
 
-SOURCES=main.c tar_handler.c file_list.c
+SOURCES=source/tar_handler.c source/file_list.c source/zip_handler.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=mycompress
 
-all: $(SOURCES) $(EXECUTABLE)
+all: $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@ -lz
+$(EXECUTABLE): main.o $(OBJECTS)
+	$(CC) $(CFLAGS) main.o $(OBJECTS) -o $@ -lz -lzip
 
-.c.o:
+main.o: main.c
+	$(CC) $(CFLAGS) -c main.c -o main.o
+
+source/%.o: source/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf *.o $(EXECUTABLE)
+	rm -rf source/*.o main.o $(EXECUTABLE)
