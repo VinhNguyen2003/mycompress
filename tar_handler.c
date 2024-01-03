@@ -7,10 +7,6 @@
 #include <pwd.h>
 #include <grp.h>
 
-#define BLOCK_SIZE 512
-#define MAX_PATH_LENGTH 4096
-#define REGTYPE '0'
-
 typedef struct {
     // File's name, as a null-terminated string
     char name[100];
